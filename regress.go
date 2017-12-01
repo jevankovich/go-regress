@@ -1,16 +1,27 @@
 package regress
 
-type Polynomial []float64
+import "gonum.org/v1/gonum/mat"
 
-func Polyval(p Polynomial, x float64) float64 {
-	pslice := []float64(p)
+func Regress(x, y []float64, degree int) []float64 {
+	xx := vandermonde(x, degree)
+	yy := mat.NewVecDense(len(y), y)
+	c := mat.NewVecDense(degree+1, nil)
 
-	xx := 1.0
-	y := 0.0
-	for _, a := range pslice {
-		y += a * xx
-		xx *= x
+	qr := new(mat.QR)
+	qr.Factorize(xx)
+
+	qr.SolveVec(c, false, yy)
+
+	return c.RawVector().Data
+}
+
+func vandermonde(x []float64, degree int) *mat.Dense {
+	mat := mat.NewDense(len(x), degree+1, nil)
+	for i, xx := range x {
+		for j, p := 0, 1.0; j < degree+1; j, p = j+1, p*xx {
+			mat.Set(i, j, p)
+		}
 	}
 
-	return y
+	return mat
 }
